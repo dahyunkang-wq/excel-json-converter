@@ -201,7 +201,7 @@ def sanitize_filename_component(s: str, fallback: str = "untitled") -> str:
     return s if s else fallback
 
 # ---------------------------------------------------------
-# [NEW] 파일명 파싱 로직 (Non-Track)
+# 파일명 파싱 로직 (Non-Track)
 # ---------------------------------------------------------
 def parse_org_role_from_filename_nt(filename: str) -> Tuple[str, str, str]:
     """
@@ -222,7 +222,7 @@ def parse_org_role_from_filename_nt(filename: str) -> Tuple[str, str, str]:
         return "UnknownOrg", "UnknownRole", "UnknownRole"
 
 # ---------------------------------------------------------
-# [NEW] 파일명 파싱 로직 (Track)
+# 파일명 파싱 로직 (Track)
 # ---------------------------------------------------------
 def parse_org_and_job_from_filename_track(filename: str) -> Tuple[str, str]:
     """
@@ -403,10 +403,14 @@ def build_workbook_nontrack(template_bytes: bytes, org: str, role: str, data: Di
     bio = BytesIO(); wb.save(bio); bio.seek(0); return bio
 
 def process_uploaded_txt_nontrack(uploaded_file, template_bytes: bytes):
+    # [FIX] 파싱은 엑셀 시트 내부 내용을 채우기 위해 유지
     org, role_display, role_for_filename = parse_org_role_from_filename_nt(uploaded_file.name)
-    safe_org  = sanitize_filename_component(org, "org")
-    safe_role = sanitize_filename_component(role_for_filename, "role")
-    out_name = f"Non Track_Paper Interview_{safe_org}_{safe_role}.xlsx"
+    
+    # [FIX] 파일명 생성 로직 변경: 원본 파일명(stem)을 그대로 사용하여 확장자만 .xlsx로 변경
+    # 이렇게 하면 "A그룹_..." 등의 원본 형식이 그대로 유지됨
+    original_stem = Path(uploaded_file.name).stem
+    out_name = f"{original_stem}.xlsx"
+
     data = load_json_from_txt_bytes(uploaded_file.read())
     wb_bytes = build_workbook_nontrack(template_bytes, org, role_display, data)
     return out_name, wb_bytes
@@ -609,10 +613,14 @@ def build_workbook_track(template_bytes: bytes, org: str, job: str, data: Dict[s
     bio = BytesIO(); wb.save(bio); bio.seek(0); return bio
 
 def process_uploaded_txt_track(uploaded_file, template_bytes: bytes):
+    # [FIX] 파싱은 엑셀 시트 내부 내용을 채우기 위해 유지
     org, job = parse_org_and_job_from_filename_track(uploaded_file.name)
-    safe_org = sanitize_filename_component(org, "org")
-    safe_job = sanitize_filename_component(job, "job")
-    out_name = f"Track_Paper Interview_{safe_org}_{safe_job}.xlsx"
+    
+    # [FIX] 파일명 생성 로직 변경: 원본 파일명(stem)을 그대로 사용하여 확장자만 .xlsx로 변경
+    # 이렇게 하면 "A그룹_..." 등의 원본 형식이 그대로 유지됨
+    original_stem = Path(uploaded_file.name).stem
+    out_name = f"{original_stem}.xlsx"
+
     data = load_json_from_txt_bytes(uploaded_file.read())
     wb_bytes = build_workbook_track(template_bytes, org, job, data)
     return out_name, wb_bytes
@@ -679,11 +687,10 @@ def apply_vba_description_edits(wb):
 
         txtB8 = "Task Sheet는 이전에 작성해주신 업무분장표를 기준으로, '수행하시는 일(Task)'을 1차로 정리한 내용입니다."
 
-        # [FIXED HERE]
         ws["B8"].value = txtB8
         ws["B8"].font = default_font
         ws["B8"].alignment = Alignment(wrap_text=True, vertical="top")
-        ws.row_dimensions[8].height = 165
+        ws.row_dimensions[8].height = 30
 
         txtB15 = "[검토 방법]\n\n▶ 1단계: ""스킬명""(B열)의 내용을 확인해보시고, "
         highlightB15_1 = "수정사항이 있을 경우 ""스킬 명"" 수정안""(C열)에 수정안을 작성해주세요."
@@ -810,8 +817,9 @@ with tab2:
         st.divider()
         st.markdown("""
     **규칙 요약**
-    - 파일명 포맷: `그룹_직무명_상위조직명_팀명_SME성함` (예: `A그룹_Data Scientist_인포테인먼트센터_음성인식개발팀_홍길동`)
-    - **파싱 로직**:
+    - 파일명 포맷: `A그룹_직무명_상위조직명_팀명_SME성함`
+    - **출력 파일명**: 업로드한 파일명과 동일하게 생성 (.xlsx)
+    - **파싱 로직** (엑셀 내용 채우기용):
       - 직무명: 첫 번째 `_` 뒤의 내용 (`tokens[1]`)
       - 상위조직명: 두 번째 `_` 뒤의 내용 (`tokens[2]`)
         """)
@@ -824,13 +832,14 @@ with tab2:
         st.write("**파일명 파싱 미리보기**")
         preview_s2 = []
         for f in uploaded_files_s2:
+            # [FIX] 미리보기에서도 파일명 생성 로직을 원본 유지로 변경
+            out = f"{Path(f.name).stem}.xlsx"
+            
             if mode_s2 == "Non Track":
                 org, role_display, role_for_filename = parse_org_role_from_filename_nt(f.name)
-                out = f"Non Track_Paper Interview_{sanitize_filename_component(org)}_{sanitize_filename_component(role_for_filename)}.xlsx"
                 preview_s2.append({"원본 파일": f.name, "상위조직명": org, "직무명": role_display, "생성될 엑셀": out})
             else:
                 org, job = parse_org_and_job_from_filename_track(f.name)
-                out = f"Track_Paper Interview_{sanitize_filename_component(org)}_{sanitize_filename_component(job)}.xlsx"
                 preview_s2.append({"원본 파일": f.name, "상위조직명": org, "직무명": job, "생성될 엑셀": out})
         st.dataframe(preview_s2, use_container_width=True)
 
