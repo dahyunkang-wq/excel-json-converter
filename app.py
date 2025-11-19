@@ -388,10 +388,12 @@ def build_workbook_nontrack(template_bytes: bytes, org: str, role: str, data: Di
     row = TASK_START_ROW_NT
     for t in tasks[: (TASK_END_ROW_NT - TASK_START_ROW_NT + 1) ]:
         set_text(ws_task, f"A{row}", str(t.get("task_name") or "").strip())
-        set_text(ws_task, f"C{row}", str(t.get("task_description") or "").strip())
+        # [FIX] Task 설명: C열 -> B열로 변경
+        set_text(ws_task, f"B{row}", str(t.get("task_description") or "").strip())
         row += 1
     for r in range(row, TASK_END_ROW_NT + 1):
-        set_text(ws_task, f"A{r}", ""); set_text(ws_task, f"C{r}", "")
+        # [FIX] 남은 행 초기화 시 C열 -> B열로 변경
+        set_text(ws_task, f"A{r}", ""); set_text(ws_task, f"B{r}", "")
 
     # Skill
     set_text(ws_skill, "B1", org)
@@ -579,8 +581,11 @@ def write_task_sheet(ws, org_name: str, job_name: str, track_name: str, tasks: L
         if row > TASK_ROW_END_T: break
         ws.cell(row=row, column=1).value = t.get("task_name") or ""
         desc = t.get("task_description") or ""
-        ws.cell(row=row, column=3).value = desc
-        ensure_wrap(ws, row, 3, vertical="center")
+        
+        # [FIX] Task 설명: Column 3 (C열) -> Column 2 (B열)로 변경
+        ws.cell(row=row, column=2).value = desc
+        ensure_wrap(ws, row, 2, vertical="center")
+        
         row += 1
     set_vertical_center_all(ws)
 
