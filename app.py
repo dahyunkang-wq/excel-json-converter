@@ -740,35 +740,12 @@ def apply_vba_description_edits(wb):
         
         default_font = Font(name=target_font_name, color=Color(rgb="000000"), bold=False)
 
-        # B8: Task 안내
-        txtB8 = (
-            "Task Sheet는 팀의 업무분장표를 기준으로, '수행하시는 일(Task)'을 1차로 정리한 내용입니다.\n"
-            "실제 현업의 관점에서 정확하게 작성되었는지 검토 및 확인 부탁드립니다.\n\n"
-            "[검토 방법]\n"
-            "▶ 1단계: ""Task 명""(A열)의 내용을 확인해보시고, "
-        )
-        highlightB8_1 = "수정사항이 있을 경우 ""Task 명"" 수정안""(B열)에 수정안을 작성해주세요."
-        txtB8_cont = (
-            "\n  - "
-        )
-        highlightB8_2 = "수정사항이 없다면 공란으로 두세요."
-        txtB8_cont2 = (
-            "\n\n▶ 2단계: ""Task 설명""(C열)의 내용을 확인해보시고, "
-        )
-        highlightB8_3 = "수정사항이 있을 경우 ""Task 설명"" 수정안""(D열)에 수정안을 작성해주세요."
-        txtB8_cont3 = (
-            "\n  - 예시) OO 업무는 실제 보안 측면으로 포커싱하고 있는데, 본 내용은 안전관리 측면으로 기입되어 있어 수정 필요합니다. 실제 하는 일은 ""~~~"" 입니다."
-            "\n  - "
-        )
-        highlightB8_4 = "수정사항이 없다면 공란으로 두세요."
+        txtB8 = "Task Sheet는 이전에 작성해주신 업무분장표를 기준으로, '수행하시는 일(Task)'을 1차로 정리한 내용입니다."
 
-        ws["B8"].value = (
-            txtB8 + highlightB8_1 + txtB8_cont + highlightB8_2 +
-            txtB8_cont2 + highlightB8_3 + txtB8_cont3 + highlightB8_4
-        )
-        ws["B8"].font = default_font
-        ws["B8"].alignment = Alignment(wrap_text=True, vertical="top")
-        ws.row_dimensions[8].height = 165 
+                ws["B8"].value = txtB8
+                ws["B8"].font = default_font
+                ws["B8"].alignment = Alignment(wrap_text=True, vertical="top")
+                ws.row_dimensions[8].height = 165
 
         # B15: Skill 안내
         txtB15 = (
