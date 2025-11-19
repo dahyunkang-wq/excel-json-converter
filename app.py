@@ -742,10 +742,11 @@ def apply_vba_description_edits(wb):
 
         txtB8 = "Task Sheet는 이전에 작성해주신 업무분장표를 기준으로, '수행하시는 일(Task)'을 1차로 정리한 내용입니다."
 
-                ws["B8"].value = txtB8
-                ws["B8"].font = default_font
-                ws["B8"].alignment = Alignment(wrap_text=True, vertical="top")
-                ws.row_dimensions[8].height = 165
+        # [FIX] IndentationError 수정됨 (들여쓰기 제거)
+        ws["B8"].value = txtB8
+        ws["B8"].font = default_font
+        ws["B8"].alignment = Alignment(wrap_text=True, vertical="top")
+        ws.row_dimensions[8].height = 165
 
         # B15: Skill 안내
         txtB15 = (
@@ -1049,6 +1050,30 @@ with tab2:
     errors_data_s2: List[str] = st.session_state.get("errors_data_s2", [])
     last_mode_s2 = st.session_state.get("last_mode_s2", mode_s2)
 
+
+    # [FIX] 누락된 순차 다운로드 렌더러(ZIP 다운로드) 함수 추가
+    def render_sequential_downloads(data_map: Dict[str, bytes]):
+        """결과가 많을 경우 ZIP으로 묶어서 다운로드 버튼을 제공"""
+        if not data_map:
+            return
+        
+        # ZIP 생성
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            for fname, data_bytes in data_map.items():
+                zf.writestr(fname, data_bytes)
+        zip_buffer.seek(0)
+        
+        st.download_button(
+            label="🗜️ 전체 결과 ZIP 다운로드",
+            data=zip_buffer,
+            file_name="all_converted_files.zip",
+            mime="application/zip",
+            key="dl_all_zip_s2",
+            use_container_width=True
+        )
+
+
     if results_data_s2:
         st.subheader("2) 변환 결과")
         col1, col2 = st.columns([2, 1])
@@ -1066,7 +1091,8 @@ with tab2:
                 )
 
         with col2:
-            render_sequential_downloads(results_data_s2) # 순차 다운로드
+            # 여기서 정의된 함수를 호출
+            render_sequential_downloads(results_data_s2)
 
     if errors_data_s2:
         st.warning("일부 파일 변환 중 오류가 발생했습니다.")
