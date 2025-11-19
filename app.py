@@ -712,7 +712,7 @@ def apply_vba_description_edits(wb):
         )
         ws["B15"].font = default_font
         ws["B15"].alignment = Alignment(wrap_text=True, vertical="top")
-        ws.row_dimensions[15].height = 165 
+        ws.row_dimensions[15].height = 180 
     except Exception as e:
         print(f"Warning: Description 시트 편집(VBA) 적용 실패: {e}")
 
